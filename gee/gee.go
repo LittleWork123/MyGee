@@ -3,7 +3,7 @@ package gee
 import "net/http"
 
 // HandlerFunc defines the request handler used by gee
-type HandlerFunc func(*Context)
+type HandlerFunc func(ctx *Context)
 
 // Engine implement the interface of ServeHTTP
 type Engine struct {
