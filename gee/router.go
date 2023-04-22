@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+type HandlerFunc func(ctx *Context)
 type router struct {
 	roots    map[string]*node //保存trie树结点信息 POST -> trie1   GET -> trie2 根据不同的请求方法区分不同的树
 	handlers map[string]HandlerFunc

@@ -2,39 +2,32 @@ package gee
 
 import "net/http"
 
-// HandlerFunc defines the request handler used by gee
-type HandlerFunc func(ctx *Context)
-
-// Engine implement the interface of ServeHTTP
 type Engine struct {
-	router *router
+	*RouterGroup // 可以看做是继承底层模块所拥有的能力
+	groups       []*RouterGroup
 }
 
-// New is the constructor of gee.Engine
 func New() *Engine {
-	return &Engine{router: newRouter()}
+	group := newRootGroup()
+	engine := &Engine{
+		RouterGroup: group,
+		groups:      []*RouterGroup{group},
+	}
+	return engine
 }
 
-func (engine *Engine) addRoute(method string, pattern string, handler HandlerFunc) {
-	engine.router.addRoute(method, pattern, handler)
+// engine想知道自己创建了多少个分组, 这里就应该由它自己来进行统计, 这是engine的职责, 而不是RouterGroup的
+func (e *Engine) Group(prefix string) *RouterGroup {
+	group := e.RouterGroup.Group(prefix)
+	e.groups = append(e.groups, group)
+	return group
 }
 
-// GET defines the method to add GET request
-func (engine *Engine) GET(pattern string, handler HandlerFunc) {
-	engine.addRoute("GET", pattern, handler)
+func (e *Engine) Run(addr string) (err error) {
+	return http.ListenAndServe(addr, e)
 }
 
-// POST defines the method to add POST request
-func (engine *Engine) POST(pattern string, handler HandlerFunc) {
-	engine.addRoute("POST", pattern, handler)
-}
-
-// Run defines the method to start a http server
-func (engine *Engine) Run(addr string) (err error) {
-	return http.ListenAndServe(addr, engine)
-}
-
-func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	c := newContext(w, req)
-	engine.router.handle(c)
+	e.handle(c) // 使用底层模块提供的能力
 }
