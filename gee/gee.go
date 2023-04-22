@@ -1,6 +1,9 @@
 package gee
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
 type Engine struct {
 	*RouterGroup // 可以看做是继承底层模块所拥有的能力
@@ -27,7 +30,15 @@ func (e *Engine) Run(addr string) (err error) {
 	return http.ListenAndServe(addr, e)
 }
 
-func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var middlewares []HandlerFunc
+	// 遍历engine的所有RouterGroup 添加中间层
+	for _, group := range engine.groups {
+		if strings.HasPrefix(req.URL.Path, group.prefix) {
+			middlewares = append(middlewares, group.middlewares...)
+		}
+	}
 	c := newContext(w, req)
-	e.handle(c) // 使用底层模块提供的能力
+	c.handlers = middlewares
+	engine.router.handle(c)
 }
