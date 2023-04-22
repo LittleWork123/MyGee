@@ -1,6 +1,7 @@
 package gee
 
 import (
+	"html/template"
 	"net/http"
 	"strings"
 )
@@ -8,6 +9,17 @@ import (
 type Engine struct {
 	*RouterGroup // 可以看做是继承底层模块所拥有的能力
 	groups       []*RouterGroup
+
+	htmlTemplates *template.Template // for html render
+	funcMap       template.FuncMap   // for html render
+}
+
+func (engine *Engine) SetFuncMap(funcMap template.FuncMap) {
+	engine.funcMap = funcMap
+}
+
+func (engine *Engine) LoadHTMLGlob(pattern string) {
+	engine.htmlTemplates = template.Must(template.New("").Funcs(engine.funcMap).ParseGlob(pattern))
 }
 
 func New() *Engine {
@@ -40,5 +52,6 @@ func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 	c := newContext(w, req)
 	c.handlers = middlewares
+	c.engine = engine
 	engine.router.handle(c)
 }
