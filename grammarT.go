@@ -16,13 +16,5 @@ func test_recover() {
 
 func main() {
 	test_recover()
-	defer func() {
-		fmt.Println("defer func1")
-		if err := recover(); err != nil {
-			fmt.Println("recover success1")
-		}
-	}()
-	a := []int{1, 2, 3}
-	fmt.Println(a[4])
 	fmt.Println("after recover")
 }
